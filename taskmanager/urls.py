@@ -18,5 +18,7 @@ urlpatterns = [
     path('api/deletecard/<int:pk>/', views.delete_card, name='delete_card'),
     path('api/updatecard/<int:pk>/', views.update_card, name='update_card'),
     path('api/swapcard/', views.swap_card, name='swap_card'),
-
+    path('api/userlist/', views.ListUsers, name='ListUsers'),
+    path('api/shareboard/<int:board_id>/', views.share_board, name='share_board'),
+    path('api/sharedboards/', views.get_shared_boards, name='get_shared_boards'),
 ]

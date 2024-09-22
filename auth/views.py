@@ -25,55 +25,41 @@ def UserRegister(request):
     
 @api_view(['POST'])
 def UserLogin(request):
-    if request.method == 'POST':
-        # Check if 'username' and 'password' are provided in the request data
-        if 'username' not in request.data or 'password' not in request.data:
-            return Response({"message": "Username and password are required"}, status=status.HTTP_400_BAD_REQUEST)
+    if 'username' not in request.data or 'password' not in request.data:
+        # Check if both username and password are provided
+        return Response({"message": "Username and password are required"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Authenticate user based on provided username and password
-        user = authenticate(username=request.data['username'], password=request.data['password'])
+    # Authenticate the user
+    user = authenticate(username=request.data['username'], password=request.data['password'])
 
-        if user is None:
-            # If user is not authenticated (username or password is incorrect)
-            return Response({"message": "Invalid username or password"}, status=status.HTTP_401_UNAUTHORIZED)
+    if user is None:
+        # If authentication fails (either username or password is incorrect)
+        return Response({"message": "Invalid username or password"}, status=status.HTTP_401_UNAUTHORIZED)
 
-        # Generate or retrieve token
-        token, created = Token.objects.get_or_create(user=user)
+    # Generate or retrieve token for the authenticated user
+    token, created = Token.objects.get_or_create(user=user)
 
-        # Serialize user data
-        serializer = UserSerializer(instance=user)
+    # Serialize user data (to send to the client)
+    serializer = UserSerializer(instance=user)
 
-        # Return token and user details
-        return Response({"token": token.key, "user": serializer.data}, status=status.HTTP_200_OK)
-    if request.method == 'POST':
-        # Check if 'username' and 'password' are provided in the request data
-        if 'username' not in request.data or 'password' not in request.data:
-            return Response({"message": "Username and password are required"}, status=status.HTTP_400_BAD_REQUEST)
+    # Return the token and user details
+    return Response({
+        "token": token.key,
+        "user": serializer.data,
+        "status": status.HTTP_200_OK,
+        "message": "Login successful"
+    }, status=status.HTTP_200_OK)
 
-        try:
-            user = get_object_or_404(User, username=request.data['username'])
-        except User.DoesNotExist:
-            # If user with provided username doesn't exist
-            return Response({"message": "User not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        # Check if the password matches
-        if not user.check_password(request.data['password']):
-            # If password doesn't match
-            return Response({"message": "Incorrect password"}, status=status.HTTP_401_UNAUTHORIZED)
-
-        # Generate or retrieve token
-        token, created = Token.objects.get_or_create(user=user)
-
-        # Serialize user data
-        serializer = UserSerializer(instance=user)
-
-        # Return token and user details
-        return Response({"token": token.key, "user": serializer.data}, status=status.HTTP_200_OK)
-    
 @api_view(['GET'])
 def UserLogout(request):
     if request.method == 'GET':
         request.user.auth_token.delete()
         return Response(status=status.HTTP_200_OK)
+    
+
+
+
+
         
     

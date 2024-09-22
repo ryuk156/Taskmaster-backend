@@ -138,3 +138,8 @@ CORS_ALLOW_HEADERS = [
 CSRF_EXEMPT_URLS = [
     r'^/api/boards/$',  # Exempt the API endpoint from CSRF protection
 ]
+
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+STATICFILES_DIRS = []

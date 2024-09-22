@@ -7,6 +7,7 @@ from django.contrib.auth.models import User
 class Board(models.Model):
     name = models.CharField(max_length=100)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    shared_with = models.ManyToManyField(User, related_name='shared_boards')
     def __str__(self):
         return self.name
     

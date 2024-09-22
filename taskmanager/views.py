@@ -1,13 +1,13 @@
-from django.shortcuts import render
-from django.http import HttpResponse
-from rest_framework import status
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
 from .models import Board, Column, Card
+from django.contrib.auth.models import User
 from .serializers import BoardSerializer, ColumnSerializer, CardSerializer
+from auth.serializers import UserSerializer
 from rest_framework.authentication import SessionAuthentication, TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import authentication_classes, permission_classes
+from rest_framework import status
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 
 
 # Create your views here.
@@ -229,3 +229,44 @@ def swap_card(request):
             return Response({"message": "One or both cards do not exist"}, status=status.HTTP_404_NOT_FOUND)
 
         
+@api_view(['GET'])
+@authentication_classes([SessionAuthentication, TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def ListUsers(request):
+    try:
+        if request.method == 'GET':
+            users = User.objects.exclude(pk=request.user.pk)
+            serializer = UserSerializer(users, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+@api_view(['POST'])
+@authentication_classes([SessionAuthentication, TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def share_board(request, board_id):
+    try:
+        board=  Board.objects.get(pk=board_id, created_by=request.user)
+    except Board.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    if request.method == 'POST':
+        if 'user_id' not in request.data:
+            return Response({"message": "User ID is required"}, status=status.HTTP_400_BAD_REQUEST)
+        user_id = request.data['user_id']
+        try:
+            user = User.objects.get(pk=user_id)
+        except User.DoesNotExist:
+            return Response({"message": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+        board.shared_with.add(user)
+        return Response({"message": f"Board shared with user {user.username}"}, status=status.HTTP_200_OK)
+    
+
+@api_view(['GET'])
+@authentication_classes([SessionAuthentication, TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def get_shared_boards(request):
+    if request.method == 'GET':
+        boards = Board.objects.filter(shared_with=request.user)
+        serializer = BoardSerializer(boards, many=True)
+        return Response(serializer.data)
+    
